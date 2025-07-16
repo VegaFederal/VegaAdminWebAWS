@@ -1,0 +1,11 @@
+{
+  "projectName": "VegaAdminWebAWS",
+  "description": "deploying admin site for hr",
+  "infraType": "cf",
+  "applicationType": "serless",
+  "awsRegion": "us-east-1",
+  "vpcId": "vpc-03de7ad5a4c7c1822",
+  "subnetIds": "subnet-02615277a84a5fcb4",
+  "githubRepo": "https://github.com/VegaFederal/VegaAdminWebAWS.git",
+  "createdAt": "2025-07-14T15:31:24Z"
+}

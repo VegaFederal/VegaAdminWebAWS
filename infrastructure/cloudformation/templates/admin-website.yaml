@@ -1,0 +1,185 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: S3 and CloudFront resources for static website hosting
+
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - test
+      - prod
+    Description: The deployment environment
+  
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: ID of the VPC where Lambda function will run
+  
+  SubnetIds:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: List of subnet IDs where Lambda function will run
+    
+  DeploymentBucket:
+    Type: String
+    Default: ''
+    Description: Name of the deployment bucket created by GitHub action
+
+Resources:
+  # S3 Bucket for static assets
+  AdminWebsiteBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      AccessControl: Private
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      VersioningConfiguration:
+        Status: Enabled
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-admin-website-bucket
+        - Key: Environment
+          Value: !Ref Environment
+
+  # CloudFront Distribution
+  CloudFrontDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Origins:
+          - DomainName: !GetAtt AdminWebsiteBucket.RegionalDomainName
+            Id: S3Origin
+            S3OriginConfig:
+              OriginAccessIdentity: !Sub origin-access-identity/cloudfront/${CloudFrontOriginAccessIdentity}
+        Enabled: true
+        DefaultRootObject: index.html
+        DefaultCacheBehavior:
+          AllowedMethods:
+            - GET
+            - HEAD
+            - OPTIONS
+          TargetOriginId: S3Origin
+          ForwardedValues:
+            QueryString: false
+            Cookies:
+              Forward: none
+          ViewerProtocolPolicy: redirect-to-https
+        PriceClass: PriceClass_100
+        ViewerCertificate:
+          CloudFrontDefaultCertificate: true
+        Tags:
+          - Key: Environment
+            Value: !Ref Environment
+
+  CloudFrontOriginAccessIdentity:
+    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: !Sub ${AWS::StackName} OAI
+
+  # Bucket Policy for CloudFront access
+  WebsiteBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref AdminWebsiteBucket
+      PolicyDocument:
+        Statement:
+          - Action:
+              - s3:GetObject
+            Effect: Allow
+            Resource: !Sub ${AdminWebsiteBucket.Arn}/*
+            Principal:
+              CanonicalUser: !GetAtt CloudFrontOriginAccessIdentity.S3CanonicalUserId
+
+  AdminApiLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub admin-api-${Environment}
+      Handler: index.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        S3Bucket: !Ref DeploymentBucket
+        S3Key: lambda/example-function.zip
+      Runtime: nodejs18.x
+      Environment:
+        Variables:
+          TABLE_NAME: your-dynamodb-table-name
+      VpcConfig:
+        SubnetIds: !Ref SubnetIds
+        SecurityGroupIds: [ ... ] # Add your security group IDs here
+
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: LambdaDynamoDBRead
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:Scan
+                  - dynamodb:Query
+                Resource: arn:aws:dynamodb:REGION:ACCOUNT_ID:table/your-dynamodb-table-name
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: "*"
+
+  AdminApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: !Sub admin-api-${Environment}
+
+  AdminApiResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !GetAtt AdminApi.RootResourceId
+      PathPart: data
+      RestApiId: !Ref AdminApi
+
+  AdminApiMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: GET
+      ResourceId: !Ref AdminApiResource
+      RestApiId: !Ref AdminApi
+      Integration:
+        IntegrationHttpMethod: POST
+        Type: AWS_PROXY
+        Uri: !Sub
+          - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaArn}/invocations
+          - { LambdaArn: !GetAtt AdminApiLambda.Arn }
+
+  LambdaApiInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt AdminApiLambda.Arn
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${AdminApi}/*
+
+Outputs:
+  WebsiteBucketName:
+    Description: S3 Bucket for website content
+    Value: !Ref AdminWebsiteBucket
+
+  CloudFrontDistributionDomainName:
+    Description: CloudFront Distribution Domain Name
+    Value: !GetAtt CloudFrontDistribution.DomainName
+
+  ApiEndpoint:
+    Description: API Gateway endpoint URL
+    Value: !Sub "https://${AdminApi}.execute-api.${AWS::Region}.amazonaws.com/prod/data"
