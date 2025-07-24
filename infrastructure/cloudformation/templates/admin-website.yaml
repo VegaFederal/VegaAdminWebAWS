@@ -23,6 +23,14 @@ Parameters:
     Type: String
     Default: ''
     Description: Name of the deployment bucket created by GitHub action
+    
+  DynamoDBTableName:
+    Type: String
+    Description: Name of the existing DynamoDB table to connect to
+    
+  SecurityGroupId:
+    Type: String
+    Description: Security Group ID for Lambda function
 
 Resources:
   # S3 Bucket for static assets
@@ -68,9 +76,9 @@ Resources:
         PriceClass: PriceClass_100
         ViewerCertificate:
           CloudFrontDefaultCertificate: true
-        Tags:
-          - Key: Environment
-            Value: !Ref Environment
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
 
   CloudFrontOriginAccessIdentity:
     Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
@@ -96,18 +104,19 @@ Resources:
     Type: AWS::Lambda::Function
     Properties:
       FunctionName: !Sub admin-api-${Environment}
-      Handler: index.handler
+      Handler: index.lambda_handler
       Role: !GetAtt LambdaExecutionRole.Arn
       Code:
         S3Bucket: !Ref DeploymentBucket
-        S3Key: lambda/example-function.zip
-      Runtime: nodejs18.x
+        S3Key: lambda/admin-api.zip
+      Runtime: python3.11
       Environment:
         Variables:
-          TABLE_NAME: your-dynamodb-table-name
+          EXISTING_TABLE: !Ref DynamoDBTableName
       VpcConfig:
         SubnetIds: !Ref SubnetIds
-        SecurityGroupIds: [ ... ] # Add your security group IDs here
+        SecurityGroupIds: 
+          - !Ref SecurityGroupId
 
   LambdaExecutionRole:
     Type: AWS::IAM::Role
@@ -119,23 +128,23 @@ Resources:
             Principal:
               Service: lambda.amazonaws.com
             Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
       Policies:
-        - PolicyName: LambdaDynamoDBRead
+        - PolicyName: DynamoDBFullAccess
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
               - Effect: Allow
                 Action:
                   - dynamodb:GetItem
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:DeleteItem
                   - dynamodb:Scan
                   - dynamodb:Query
-                Resource: arn:aws:dynamodb:REGION:ACCOUNT_ID:table/your-dynamodb-table-name
-              - Effect: Allow
-                Action:
-                  - logs:CreateLogGroup
-                  - logs:CreateLogStream
-                  - logs:PutLogEvents
-                Resource: "*"
+                Resource: !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${DynamoDBTableName}
 
   AdminApi:
     Type: AWS::ApiGateway::RestApi
@@ -149,12 +158,65 @@ Resources:
       PathPart: data
       RestApiId: !Ref AdminApi
 
+  # New resource for get-all-data endpoint
+  GetAllDataResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !GetAtt AdminApi.RootResourceId
+      PathPart: api
+      RestApiId: !Ref AdminApi
+
+  GetAllDataApiResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !Ref GetAllDataResource
+      PathPart: get-all-data
+      RestApiId: !Ref AdminApi
+
   AdminApiMethod:
     Type: AWS::ApiGateway::Method
     Properties:
       AuthorizationType: NONE
       HttpMethod: GET
       ResourceId: !Ref AdminApiResource
+      RestApiId: !Ref AdminApi
+      Integration:
+        IntegrationHttpMethod: POST
+        Type: AWS_PROXY
+        Uri: !Sub
+          - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaArn}/invocations
+          - { LambdaArn: !GetAtt AdminApiLambda.Arn }
+
+  # GET method for get-all-data endpoint
+  GetAllDataApiMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: GET
+      ResourceId: !Ref GetAllDataApiResource
+      RestApiId: !Ref AdminApi
+      Integration:
+        IntegrationHttpMethod: POST
+        Type: AWS_PROXY
+        Uri: !Sub
+          - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaArn}/invocations
+          - { LambdaArn: !GetAtt AdminApiLambda.Arn }
+
+  # Resource for update-application endpoint
+  UpdateApplicationResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !Ref GetAllDataResource
+      PathPart: update-application
+      RestApiId: !Ref AdminApi
+
+  # PUT method for update-application endpoint
+  UpdateApplicationMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: PUT
+      ResourceId: !Ref UpdateApplicationResource
       RestApiId: !Ref AdminApi
       Integration:
         IntegrationHttpMethod: POST
@@ -183,3 +245,7 @@ Outputs:
   ApiEndpoint:
     Description: API Gateway endpoint URL
     Value: !Sub "https://${AdminApi}.execute-api.${AWS::Region}.amazonaws.com/prod/data"
+    
+  DeploymentBucketName:
+    Description: S3 bucket for deployment artifacts
+    Value: !Ref DeploymentBucket

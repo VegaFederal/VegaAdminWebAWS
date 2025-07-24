@@ -49,12 +49,10 @@ jobs:
           PROJECT_NAME=$(jq -r '.projectName' $CONFIG_FILE)
           VPC_ID=$(jq -r '.vpcId' $CONFIG_FILE)
           SUBNET_IDS=$(jq -r '.subnetIds' $CONFIG_FILE)
-          AI_MODEL=$(jq -r '.aiModel' $CONFIG_FILE)
 
           echo "PROJECT_NAME=$PROJECT_NAME" >> $GITHUB_ENV
           echo "VPC_ID=$VPC_ID" >> $GITHUB_ENV
           echo "SUBNET_IDS=$SUBNET_IDS" >> $GITHUB_ENV
-          echo "AI_MODEL=$AI_MODEL" >> $GITHUB_ENV
       - name: Create template bucket
         run: |
             TIMESTAMP=$(date +%s)
@@ -70,11 +68,13 @@ jobs:
         run: aws s3 sync infrastructure/cloudformation/templates/ s3://$TEMPLATE_BUCKET/templates/
       - name: Create Lambda deployment package
         run: |
-          cd src/lambda
-          zip -r lambdaAiHandler.zip lambdaAiHandler.py
+          cd src/lambda/admin-api
+          pip3 install -r requirements.txt -t .
+          zip -r admin-api.zip . -x "*.git*" "__pycache__/*" "*.pyc" "*.DS_Store" "*.zip"
           PROJECT_NAME_LOWER=$(echo "$PROJECT_NAME" | tr '[:upper:]' '[:lower:]')
-          aws s3 mb s3://${PROJECT_NAME_LOWER}-dev-deployment || true
-          aws s3 cp lambdaAiHandler.zip s3://${PROJECT_NAME_LOWER}-dev-deployment/
+          DEPLOYMENT_BUCKET="${PROJECT_NAME_LOWER}-dev-deployment"
+          aws s3 mb s3://$DEPLOYMENT_BUCKET || true
+          aws s3 cp admin-api.zip s3://$DEPLOYMENT_BUCKET/lambda/admin-api.zip
 
       - name: Deploy CloudFormation stack
         uses: aws-actions/aws-cloudformation-github-deploy@v1
@@ -82,23 +82,29 @@ jobs:
           name: ${{ env.PROJECT_NAME }}
           template: infrastructure/cloudformation/main-template.yaml
           parameter-overrides: >-
-            ProjectName=${{ env.PROJECT_NAME }},
             Environment=dev,
             VpcId=${{ env.VPC_ID }},
             SubnetIds=${{ env.SUBNET_IDS }},
             TemplateBucket=${{ env.TEMPLATE_BUCKET }},
-            AiModelId=${{ env.AI_MODEL }}
+            DynamoDBTableName=vega-web-contact-table-dev-dev
           no-fail-on-empty-changeset: "1"
-          capabilities: "CAPABILITY_NAMED_IAM"
+          capabilities: "CAPABILITY_IAM,CAPABILITY_NAMED_IAM"
 
-      - name: Upload website files
+      - name: Build and upload website files
         run: |
+          # Build React app
+          cd src
+          npm install
+          npm run build
+          cd ..
+          
+          # Upload to S3 bucket
           BUCKET_NAME=$(aws cloudformation describe-stacks --stack-name ${{ env.PROJECT_NAME }} --query "Stacks[0].Outputs[?OutputKey=='WebsiteBucketName'].OutputValue" --output text)
-          aws s3 sync src/website/ s3://$BUCKET_NAME/
+          aws s3 sync src/dist/ s3://$BUCKET_NAME/
 
       - name: Get CloudFront URL
         run: |
-          CF_URL=$(aws cloudformation describe-stacks --stack-name ${{ env.PROJECT_NAME }} --query "Stacks[0].Outputs[?OutputKey=='WebsiteUrl'].OutputValue" --output text)
+          CF_URL=$(aws cloudformation describe-stacks --stack-name ${{ env.PROJECT_NAME }} --query "Stacks[0].Outputs[?OutputKey=='CloudFrontDistributionDomainName'].OutputValue" --output text)
           echo "Your website is available at: https://$CF_URL"
   cleanup:
     if: github.event.inputs.action == 'cleanup'
