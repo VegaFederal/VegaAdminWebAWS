@@ -108,7 +108,10 @@ Resources:
       Role: !GetAtt LambdaExecutionRole.Arn
       Code:
         S3Bucket: !Ref DeploymentBucket
+        S3Key: lambda/admin-api.zip
       Runtime: python3.11
+      Timeout: 30
+      MemorySize: 256
       Environment:
         Variables:
           EXISTING_TABLE: !Ref DynamoDBTableName
