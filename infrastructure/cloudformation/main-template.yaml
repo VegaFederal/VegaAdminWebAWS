@@ -27,12 +27,10 @@ Parameters:
     
   TemplateBucket:
     Type: String
-    Default: admin-website-deployment-dev
     Description: S3 bucket containing CloudFormation templates
   
   DeploymentBucket:
     Type: String
-    Default: vegaadminwebaws-dev-deployment
     Description: S3 bucket containing deployment artifacts
 
 Resources:
