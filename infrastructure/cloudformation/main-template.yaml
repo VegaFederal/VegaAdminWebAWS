@@ -74,9 +74,9 @@ Outputs:
 
   DeploymentBucketName:
     Description: S3 bucket for deployment artifacts
-    Value: !GetAtt AdminWebsiteStack.Outputs.DeploymentBucketName
+    Value: !GetAtt AdminWebsiteStack.Outputs.DeploymentBucket
     Export:
-      Name: !Sub ${AWS::StackName}-DeploymentBucketName
+      Name: !Sub ${AWS::StackName}-DeploymentBucket
 
   ApiEndpoint:
     Description: API Gateway endpoint URL

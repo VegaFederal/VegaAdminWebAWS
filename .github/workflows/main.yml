@@ -74,30 +74,8 @@ jobs:
           PROJECT_NAME_LOWER=$(echo "$PROJECT_NAME" | tr '[:upper:]' '[:lower:]')
           DEPLOYMENT_BUCKET="${PROJECT_NAME_LOWER}-dev-deployment"
           echo "DEPLOYMENT_BUCKET=$DEPLOYMENT_BUCKET" >> $GITHUB_ENV
-          
-          # Create bucket and wait for it to be available
-          echo "Creating deployment bucket: $DEPLOYMENT_BUCKET"
-          aws s3 mb s3://$DEPLOYMENT_BUCKET --region ${{ secrets.AWS_REGION || 'us-east-1' }}
-          
-          # Wait for bucket to be available
-          echo "Waiting for bucket to be available..."
-          aws s3api wait bucket-exists --bucket $DEPLOYMENT_BUCKET
-          
-          # Upload the Lambda package
-          echo "Uploading Lambda package..."
+          aws s3 mb s3://$DEPLOYMENT_BUCKET || true
           aws s3 cp admin-api.zip s3://$DEPLOYMENT_BUCKET/lambda/admin-api.zip
-          
-          # Verify upload
-          echo "Verifying upload..."
-          aws s3 ls s3://$DEPLOYMENT_BUCKET/lambda/admin-api.zip
-          echo "File size:"
-          aws s3 ls s3://$DEPLOYMENT_BUCKET/lambda/admin-api.zip --human-readable
-
-      - name: Verify deployment bucket exists
-        run: |
-          echo "Verifying deployment bucket exists before CloudFormation deployment..."
-          aws s3api head-bucket --bucket ${{ env.DEPLOYMENT_BUCKET }}
-          echo "Bucket verification successful"
 
       - name: Deploy CloudFormation stack
         uses: aws-actions/aws-cloudformation-github-deploy@v1
