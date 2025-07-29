@@ -70,6 +70,8 @@ jobs:
         run: aws s3 sync infrastructure/cloudformation/templates/ s3://$TEMPLATE_BUCKET/templates/
       - name: Create Lambda deployment package
         run: |
+          DEPLOYMENT_BUCKET="${PROJECT_NAME_LOWER}-dev-deployment"
+          echo "DEPLOYMENT_BUCKET=$DEPLOYMENT_BUCKET" >> $GITHUB_ENV
           cd src/lambda/admin-api
           pip3 install -r requirements.txt -t .
           zip -r admin-api.zip . -x "*.git*" "__pycache__/*" "*.pyc" "*.DS_Store" "*.zip"
@@ -88,7 +90,7 @@ jobs:
             VpcId=${{ env.VPC_ID }},
             SubnetIds=${{ env.SUBNET_IDS }},
             TemplateBucket=${{ env.TEMPLATE_BUCKET }},
-            DeploymentBucket=vegaadminwebaws-dev-deployment,
+            DeploymentBucket=${{ env.DEPLOYMENT_BUCKET }},
             DynamoDBTableName=vega-web-contact-table-dev-dev
           no-fail-on-empty-changeset: "1"
           capabilities: "CAPABILITY_IAM,CAPABILITY_NAMED_IAM"
