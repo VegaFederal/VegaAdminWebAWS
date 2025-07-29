@@ -113,10 +113,7 @@ Resources:
       Environment:
         Variables:
           EXISTING_TABLE: !Ref DynamoDBTableName
-      VpcConfig:
-        SubnetIds: !Ref SubnetIds
-        SecurityGroupIds: 
-          - !Ref SecurityGroupId
+    # Remove VpcConfig temporarily for testing
 
   LambdaExecutionRole:
     Type: AWS::IAM::Role
