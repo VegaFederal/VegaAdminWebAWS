@@ -108,7 +108,6 @@ Resources:
       Role: !GetAtt LambdaExecutionRole.Arn
       Code:
         S3Bucket: !Ref DeploymentBucket
-        S3Key: lambda/admin-api.zip
       Runtime: python3.11
       Environment:
         Variables:
