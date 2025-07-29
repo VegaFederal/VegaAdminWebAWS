@@ -107,7 +107,8 @@ Resources:
       Handler: index.lambda_handler
       Role: !GetAtt LambdaExecutionRole.Arn
       Code:
-        S3Bucket: !GetAtt AdminWebsiteStack.Outputs.DeploymentBucketName
+        S3Bucket: !Ref DeploymentBucket
+        S3Key: lambda/admin-api.zip
       Runtime: python3.11
       Environment:
         Variables:
