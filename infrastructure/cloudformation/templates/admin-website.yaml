@@ -112,8 +112,11 @@ Resources:
       Environment:
         Variables:
           EXISTING_TABLE: !Ref DynamoDBTableName
-    # Remove VpcConfig temporarily for testing
-
+      VpcConfig:
+        SubnetIds: !Ref SubnetIds
+        SecurityGroupIds: 
+          - !Ref SecurityGroupId
+          
   LambdaExecutionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -141,6 +144,14 @@ Resources:
                   - dynamodb:Scan
                   - dynamodb:Query
                 Resource: !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${DynamoDBTableName}
+        - PolicyName: S3Access  # Add this policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                Resource: !Sub arn:aws:s3:::${DeploymentBucket}/*
 
   AdminApi:
     Type: AWS::ApiGateway::RestApi
