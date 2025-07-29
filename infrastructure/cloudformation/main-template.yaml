@@ -31,6 +31,7 @@ Parameters:
   
   DeploymentBucket:
     Type: String
+    Default: vegaadminwebaws-dev-deployment  # Fixed: Added correct default
     Description: S3 bucket containing deployment artifacts
 
 Resources:
@@ -74,9 +75,9 @@ Outputs:
 
   DeploymentBucketName:
     Description: S3 bucket for deployment artifacts
-    Value: !GetAtt AdminWebsiteStack.Outputs.DeploymentBucket
+    Value: !GetAtt AdminWebsiteStack.Outputs.DeploymentBucketName  # Fixed: Correct output name
     Export:
-      Name: !Sub ${AWS::StackName}-DeploymentBucket
+      Name: !Sub ${AWS::StackName}-DeploymentBucketName
 
   ApiEndpoint:
     Description: API Gateway endpoint URL
