@@ -31,7 +31,6 @@ Parameters:
   
   DeploymentBucket:
     Type: String
-    Default: vegaadminwebaws-dev-deployment
     Description: S3 bucket containing deployment artifacts
 
 Resources:
@@ -62,8 +61,8 @@ Resources:
         - Key: Environment
           Value: !Ref Environment
 
-Conditions:
-  HasVpcConfig: !Not [!Equals [!Ref VpcId, '']]
+# Conditions:
+#   HasVpcConfig: !Not [!Equals [!Ref VpcId, '']]
   # Add more nested stacks as needed
 
 Outputs:
@@ -92,7 +91,7 @@ Outputs:
       Name: !Sub ${AWS::StackName}-CloudFrontDomainName
   # Your outputs will go here
   WebServerSecurityGroupId:
-    Condition: HasVpcConfig
+    # Condition: HasVpcConfig
     Description: Security Group ID for web servers
     Value: !GetAtt SecurityGroupsStack.Outputs.WebServerSecurityGroupId
     Export:
