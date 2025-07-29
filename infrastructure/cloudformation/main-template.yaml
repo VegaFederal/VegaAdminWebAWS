@@ -54,7 +54,7 @@ Resources:
         Environment: !Ref Environment
         VpcId: !Ref VpcId
         SubnetIds: !Join [',', !Ref SubnetIds]
-        DeploymentBucket: !Ref DeploymentBucket
+        DeploymentBucket: !Ref TemplateBucket
         DynamoDBTableName: !Ref DynamoDBTableName
         SecurityGroupId: !GetAtt SecurityGroupsStack.Outputs.WebServerSecurityGroupId
       Tags:
