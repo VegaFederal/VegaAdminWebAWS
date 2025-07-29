@@ -47,6 +47,16 @@ Resources:
         - Key: Environment
           Value: !Ref Environment
 
+  DeploymentBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub ${AWS::StackName}-deployment
+      VersioningConfiguration:
+        Status: Enabled
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+
   AdminWebsiteStack:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -55,7 +65,6 @@ Resources:
         Environment: !Ref Environment
         VpcId: !Ref VpcId
         SubnetIds: !Join [',', !Ref SubnetIds]
-        TemplateBucket: !Ref TemplateBucket
         DeploymentBucket: !Ref DeploymentBucket
         DynamoDBTableName: !Ref DynamoDBTableName
         SecurityGroupId: !GetAtt SecurityGroupsStack.Outputs.WebServerSecurityGroupId
