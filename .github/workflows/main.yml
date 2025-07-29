@@ -53,6 +53,20 @@ jobs:
           echo "PROJECT_NAME=$PROJECT_NAME" >> $GITHUB_ENV
           echo "VPC_ID=$VPC_ID" >> $GITHUB_ENV
           echo "SUBNET_IDS=$SUBNET_IDS" >> $GITHUB_ENV
+
+      - name: Set environment variables
+        run: |
+          ENVIRONMENT="${{ github.event.inputs.environment || 'dev' }}"
+          STACK_NAME="admin-page-${ENVIRONMENT}"
+          TEMPLATE_BUCKET="admin-page-templates-${ENVIRONMENT}"
+          DEPLOYMENT_BUCKET="admin-page-deployment-${ENVIRONMENT}"
+          
+          echo "ENVIRONMENT=$ENVIRONMENT" >> $GITHUB_ENV
+          echo "STACK_NAME=$STACK_NAME" >> $GITHUB_ENV
+          echo "TEMPLATE_BUCKET=$TEMPLATE_BUCKET" >> $GITHUB_ENV
+          echo "DEPLOYMENT_BUCKET=$DEPLOYMENT_BUCKET" >> $GITHUB_ENV
+
+
       - name: Create template bucket
         run: |
             TIMESTAMP=$(date +%s)
@@ -60,8 +74,6 @@ jobs:
             PROJECT_NAME_LOWER=$(echo "$PROJECT_NAME" | tr '[:upper:]' '[:lower:]')
             TEMPLATE_BUCKET="${PROJECT_NAME_LOWER}-templates-${TIMESTAMP}"
             echo "TEMPLATE_BUCKET=$TEMPLATE_BUCKET" >> $GITHUB_ENV
-            DEPLOYMENT_BUCKET="${PROJECT_NAME_LOWER}-dev-deployment"
-            echo "DEPLOYMENT_BUCKET=$DEPLOYMENT_BUCKET" >> $GITHUB_ENV
 
             echo "Creating bucket: $TEMPLATE_BUCKET"
             aws s3 mb s3://$TEMPLATE_BUCKET
@@ -74,7 +86,8 @@ jobs:
           pip3 install -r requirements.txt -t .
           zip -r admin-api.zip . -x "*.git*" "__pycache__/*" "*.pyc" "*.DS_Store" "*.zip"
           PROJECT_NAME_LOWER=$(echo "$PROJECT_NAME" | tr '[:upper:]' '[:lower:]')
-
+          DEPLOYMENT_BUCKET="${PROJECT_NAME_LOWER}-dev-deployment"
+          echo "DEPLOYMENT_BUCKET=$DEPLOYMENT_BUCKET" >> $GITHUB_ENV
           aws s3 mb s3://$DEPLOYMENT_BUCKET || true
           aws s3 cp admin-api.zip s3://$DEPLOYMENT_BUCKET/lambda/admin-api.zip
 
