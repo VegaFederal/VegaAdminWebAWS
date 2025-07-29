@@ -86,6 +86,7 @@ jobs:
             VpcId=${{ env.VPC_ID }},
             SubnetIds=${{ env.SUBNET_IDS }},
             TemplateBucket=${{ env.TEMPLATE_BUCKET }},
+            DeploymentBucket=${{ env.DEPLOYMENT_BUCKET }},
             DynamoDBTableName=vega-web-contact-table-dev-dev
           no-fail-on-empty-changeset: "1"
           capabilities: "CAPABILITY_IAM,CAPABILITY_NAMED_IAM"

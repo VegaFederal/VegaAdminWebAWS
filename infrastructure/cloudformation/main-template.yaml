@@ -29,6 +29,11 @@ Parameters:
     Type: String
     Default: admin-website-deployment-dev
     Description: S3 bucket containing CloudFormation templates
+  
+  DeploymentBucket:
+    Type: String
+    Default: admin-website-deployment-dev
+    Description: S3 bucket containing deployment artifacts
 
 Resources:
   # Security Groups Stack
@@ -51,7 +56,7 @@ Resources:
         Environment: !Ref Environment
         VpcId: !Ref VpcId
         SubnetIds: !Join [',', !Ref SubnetIds]
-        DeploymentBucket: !Sub admin-website-deployment-${Environment}
+        DeploymentBucket: !Ref DeploymentBucket
         DynamoDBTableName: !Ref DynamoDBTableName
         SecurityGroupId: !GetAtt SecurityGroupsStack.Outputs.WebServerSecurityGroupId
       Tags:
