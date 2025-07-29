@@ -85,3 +85,9 @@ Outputs:
     Export:
       Name: !Sub ${AWS::StackName}-CloudFrontDomainName
   # Your outputs will go here
+  WebServerSecurityGroupId:
+    Condition: HasVpcConfig
+    Description: Security Group ID for web servers
+    Value: !GetAtt SecurityGroupsStack.Outputs.WebServerSecurityGroupId
+    Export:
+      Name: !Sub ${AWS::StackName}-WebServerSecurityGroupId
