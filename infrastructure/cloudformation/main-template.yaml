@@ -32,7 +32,7 @@ Parameters:
   
   DeploymentBucket:
     Type: String
-    Default: admin-website-deployment-dev
+    Default: vegaadminwebaws-dev-deployment
     Description: S3 bucket containing deployment artifacts
 
 Resources:
