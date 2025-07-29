@@ -54,18 +54,6 @@ jobs:
           echo "VPC_ID=$VPC_ID" >> $GITHUB_ENV
           echo "SUBNET_IDS=$SUBNET_IDS" >> $GITHUB_ENV
 
-      - name: Set environment variables
-        run: |
-          ENVIRONMENT="${{ github.event.inputs.environment || 'dev' }}"
-          STACK_NAME="admin-page-${ENVIRONMENT}"
-          TEMPLATE_BUCKET="admin-page-templates-${ENVIRONMENT}"
-          DEPLOYMENT_BUCKET="admin-page-deployment-${ENVIRONMENT}"
-          
-          echo "ENVIRONMENT=$ENVIRONMENT" >> $GITHUB_ENV
-          echo "STACK_NAME=$STACK_NAME" >> $GITHUB_ENV
-          echo "TEMPLATE_BUCKET=$TEMPLATE_BUCKET" >> $GITHUB_ENV
-          echo "DEPLOYMENT_BUCKET=$DEPLOYMENT_BUCKET" >> $GITHUB_ENV
-
 
       - name: Create template bucket
         run: |
