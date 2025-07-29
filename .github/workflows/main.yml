@@ -70,12 +70,13 @@ jobs:
         run: aws s3 sync infrastructure/cloudformation/templates/ s3://$TEMPLATE_BUCKET/templates/
       - name: Create Lambda deployment package
         run: |
-          DEPLOYMENT_BUCKET="${PROJECT_NAME_LOWER}-dev-deployment"
-          echo "DEPLOYMENT_BUCKET=$DEPLOYMENT_BUCKET" >> $GITHUB_ENV
+
           cd src/lambda/admin-api
           pip3 install -r requirements.txt -t .
           zip -r admin-api.zip . -x "*.git*" "__pycache__/*" "*.pyc" "*.DS_Store" "*.zip"
           PROJECT_NAME_LOWER=$(echo "$PROJECT_NAME" | tr '[:upper:]' '[:lower:]')
+          DEPLOYMENT_BUCKET="${PROJECT_NAME_LOWER}-dev-deployment"
+          echo "DEPLOYMENT_BUCKET=$DEPLOYMENT_BUCKET" >> $GITHUB_ENV
 
           aws s3 mb s3://$DEPLOYMENT_BUCKET || true
           aws s3 cp admin-api.zip s3://$DEPLOYMENT_BUCKET/lambda/admin-api.zip
