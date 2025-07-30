@@ -110,7 +110,15 @@ jobs:
 
       - name: Invalidate CloudFront cache
         run: |
+          # Get the CloudFront distribution ID from CloudFormation outputs
           DISTRIBUTION_ID=$(aws cloudformation describe-stacks --stack-name ${{ env.PROJECT_NAME }} --query "Stacks[0].Outputs[?OutputKey=='CloudFrontDistributionId'].OutputValue" --output text)
+          
+          if [ -z "$DISTRIBUTION_ID" ]; then
+            echo "CloudFrontDistributionId output not found. Please check the CloudFormation stack outputs."
+            echo "You can find your distribution ID in the AWS Console under CloudFront > Distributions"
+            exit 1
+          fi
+          
           echo "Invalidating CloudFront distribution: $DISTRIBUTION_ID"
           aws cloudfront create-invalidation --distribution-id $DISTRIBUTION_ID --paths "/*"
           echo "CloudFront invalidation created successfully"
