@@ -9,7 +9,7 @@ function ApplicationTable() {
   const [error, setError] = useState(null);
 
   // Replace this with your actual API Gateway URL
-  const API_BASE_URL = 'https://auyql3rv7k.execute-api.us-east-1.amazonaws.com/prod/data';
+  const API_BASE_URL = 'https://auyql3rv7k.execute-api.us-east-1.amazonaws.com/prod';
 
   // Fetch data from DynamoDB on component mount
   useEffect(() => {
