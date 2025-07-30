@@ -107,7 +107,7 @@ jobs:
 
       - name: Invalidate CloudFront cache
         run: |
-          DISTRIBUTION_ID=$(aws cloudformation describe-stacks --stack-name ${{ env.PROJECT_NAME }} --query "Stacks[0].Outputs[?OutputKey=='CloudFrontDistributionDomainName'].OutputValue" --output text | cut -d'.' -f1)
+          DISTRIBUTION_ID=$(aws cloudformation describe-stacks --stack-name ${{ env.PROJECT_NAME }} --query "Stacks[0].Outputs[?OutputKey=='CloudFrontDistributionId'].OutputValue" --output text)
           aws cloudfront create-invalidation --distribution-id $DISTRIBUTION_ID --paths "/*"
 
       - name: Get CloudFront URL
