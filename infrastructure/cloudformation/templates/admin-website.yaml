@@ -82,12 +82,13 @@ Resources:
         CacheBehaviors:
           - PathPattern: /api/*
             AllowedMethods:
-              - GET
               - HEAD
+              - DELETE
+              - POST
+              - GET
               - OPTIONS
               - PUT
-              - POST
-              - DELETE
+              - PATCH
             TargetOriginId: ApiOrigin
             ForwardedValues:
               QueryString: true
