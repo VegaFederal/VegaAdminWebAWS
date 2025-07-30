@@ -6,9 +6,9 @@ function ApplicationTable() {
   const [applications, setApplications] = useState([]);
   const [filter, setFilter] = useState('all');
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState(null); 
 
-  // Replace this with your actual API Gateway URL
+  //Updated api url
   const API_BASE_URL = 'https://auyql3rv7k.execute-api.us-east-1.amazonaws.com/prod';
 
   // Fetch data from DynamoDB on component mount
