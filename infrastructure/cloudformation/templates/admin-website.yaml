@@ -267,6 +267,16 @@ Resources:
 
 
 
+  # API Gateway Deployment
+  ApiDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn:
+      - GetAllDataApiMethod
+      - UpdateApplicationMethod
+    Properties:
+      RestApiId: !Ref AdminApi
+      StageName: prod
+
   LambdaApiInvokePermission:
     Type: AWS::Lambda::Permission
     Properties:
