@@ -8,8 +8,8 @@ function ApplicationTable() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null); 
 
-  //Updated api url
-  const API_BASE_URL = 'https://auyql3rv7k.execute-api.us-east-1.amazonaws.com/prod';
+  // Use CloudFront URL for API calls (same domain as website, no CORS issues)
+  const API_BASE_URL = window.location.origin;
 
   // Fetch data from DynamoDB on component mount
   useEffect(() => {
