@@ -96,17 +96,19 @@ jobs:
           no-fail-on-empty-changeset: "1"
           capabilities: "CAPABILITY_IAM,CAPABILITY_NAMED_IAM"
 
-      - name: Build and upload website files
+      - name: Build website
+        run: npm run build
+        working-directory: ./src
+
+      - name: Upload website files
         run: |
-          # Build React app
-          cd src
-          npm install
-          npm run build
-          cd ..
-          
-          # Upload to S3 bucket
           BUCKET_NAME=$(aws cloudformation describe-stacks --stack-name ${{ env.PROJECT_NAME }} --query "Stacks[0].Outputs[?OutputKey=='WebsiteBucketName'].OutputValue" --output text)
           aws s3 sync src/dist/ s3://$BUCKET_NAME/
+
+      - name: Invalidate CloudFront cache
+        run: |
+          DISTRIBUTION_ID=$(aws cloudformation describe-stacks --stack-name ${{ env.PROJECT_NAME }} --query "Stacks[0].Outputs[?OutputKey=='CloudFrontDistributionDomainName'].OutputValue" --output text | cut -d'.' -f1)
+          aws cloudfront create-invalidation --distribution-id $DISTRIBUTION_ID --paths "/*"
 
       - name: Get CloudFront URL
         run: |
