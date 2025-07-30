@@ -235,6 +235,8 @@ Resources:
           - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaArn}/invocations
           - { LambdaArn: !GetAtt AdminApiLambda.Arn }
 
+
+
   LambdaApiInvokePermission:
     Type: AWS::Lambda::Permission
     Properties:

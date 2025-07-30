@@ -153,6 +153,19 @@ def lambda_handler(event, context):
     """Lambda handler receives the request from the html page and process the request."""
     logger.info(f"Received event: {json.dumps(event)}")
     
+    # Handle OPTIONS preflight requests for CORS
+    if event.get('httpMethod') == 'OPTIONS':
+        return {
+            'statusCode': 200,
+            'headers': {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
+                'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+                'Content-Type': 'application/json'
+            },
+            'body': json.dumps({'message': 'OK'})
+        }
+    
     path = event.get('path', '')
     
     if path == '/api/get-all-data':
