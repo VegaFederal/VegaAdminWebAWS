@@ -95,9 +95,7 @@ Resources:
               Headers:
                 - Authorization
                 - Content-Type
-                - X-Amz-Date
                 - X-Api-Key
-                - X-Amz-Security-Token
               Cookies:
                 Forward: all
             ViewerProtocolPolicy: redirect-to-https
