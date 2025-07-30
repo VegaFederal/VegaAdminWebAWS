@@ -254,7 +254,7 @@ Outputs:
 
   ApiEndpoint:
     Description: API Gateway endpoint URL
-    Value: !Sub "https://${AdminApi}.execute-api.${AWS::Region}.amazonaws.com/prod"
+    Value: !Sub "https://${AdminApi}.execute-api.${AWS::Region}.amazonaws.com/prod/data"
     
   DeploymentBucketName:
     Description: S3 bucket for deployment artifacts
