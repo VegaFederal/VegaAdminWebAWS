@@ -62,6 +62,7 @@ Resources:
               OriginAccessIdentity: !Sub origin-access-identity/cloudfront/${CloudFrontOriginAccessIdentity}
           - DomainName: !Sub ${AdminApi}.execute-api.${AWS::Region}.amazonaws.com
             Id: ApiOrigin
+            OriginPath: !Sub /${Environment}
             CustomOriginConfig:
               HTTPPort: 443
               HTTPSPort: 443
@@ -274,7 +275,7 @@ Resources:
       - UpdateApplicationMethod
     Properties:
       RestApiId: !Ref AdminApi
-      StageName: prod
+      StageName: !Ref Environment
 
   LambdaApiInvokePermission:
     Type: AWS::Lambda::Permission
@@ -299,7 +300,7 @@ Outputs:
 
   ApiEndpoint:
     Description: API Gateway endpoint URL
-    Value: !Sub "https://${AdminApi}.execute-api.${AWS::Region}.amazonaws.com/prod"
+    Value: !Sub "https://${AdminApi}.execute-api.${AWS::Region}.amazonaws.com/${Environment}"
     
   DeploymentBucketName:
     Description: S3 bucket for deployment artifacts
