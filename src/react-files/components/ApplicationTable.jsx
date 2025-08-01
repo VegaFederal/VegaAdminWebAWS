@@ -195,8 +195,8 @@ function ApplicationTable() {
             <th>Min Salary</th>
             <th>Work Role</th>
             <th>Resume</th>
-            <th>Status</th>
-            <th>Actions</th>
+            <th>Current Status</th>
+            <th>Status Tracking</th>
           </tr>
         </thead>
         <tbody>
@@ -219,16 +219,19 @@ function ApplicationTable() {
                 </td>
                 <td>{app.status.charAt(0).toUpperCase() + app.status.slice(1)}</td>
                 <td>
-                  {statusOptions.map(status => (
-                    <button
-                      key={status}
-                      onClick={() => updateStatus(app.id, status)}
-                      disabled={app.status === status}
-                      style={{ marginRight: 4 }}
-                    >
-                      {status.charAt(0).toUpperCase() + status.slice(1)}
-                    </button>
-                  ))}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    {statusOptions.map(status => (
+                      <label key={status} style={{ display: 'flex', alignItems: 'center', fontSize: '12px' }}>
+                        <input
+                          type="checkbox"
+                          checked={app.status === status}
+                          onChange={() => updateStatus(app.id, status)}
+                          style={{ marginRight: '6px' }}
+                        />
+                        {status.charAt(0).toUpperCase() + status.slice(1)}
+                      </label>
+                    ))}
+                  </div>
                 </td>
               </tr>
             ))
