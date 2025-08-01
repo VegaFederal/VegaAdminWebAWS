@@ -110,7 +110,10 @@ jobs:
 
       - name: Invalidate CloudFront cache
         run: |
-          aws cloudfront create-invalidation --distribution-id E1I5NPM6IY4J23 --paths "/*"
+          # Get the CloudFront distribution ID from CloudFormation outputs
+          DISTRIBUTION_ID=$(aws cloudformation describe-stacks --stack-name ${{ env.PROJECT_NAME }} --query "Stacks[0].Outputs[?OutputKey=='CloudFrontDistributionId'].OutputValue" --output text)
+          echo "Invalidating CloudFront distribution: $DISTRIBUTION_ID"
+          aws cloudfront create-invalidation --distribution-id $DISTRIBUTION_ID --paths "/*"
           echo "CloudFront invalidation created successfully"
 
       - name: Get CloudFront URL
